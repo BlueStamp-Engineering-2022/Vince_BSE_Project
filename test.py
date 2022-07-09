@@ -6,6 +6,8 @@ import math
 
 color_aim = (240, 125, 186)
 videoCapture = cv2.VideoCapture(0)
+videoCapture.set(3, 640)
+videoCapture.set(4, 360)
 middle = videoCapture.get(3) / 2
 previous_radius = None
 

@@ -10,12 +10,12 @@ from picamera.array import PiRGBArray
 color_aim = (240, 125, 186)
 #videoCapture = cv2.VideoCapture(0)
 videoCapture = PiCamera()
-videoCapture.resolution = (1280, 720)  # 60fps
-videoCapture.framerate = 60
-rawCapture = PiRGBArray(videoCapture, size=(160, 120))
-
-middle = videoCapture.get(3)/2
+videoCapture.resolution = (320, 240)  # 16-32 fps
+rawCapture = PiRGBArray(videoCapture)
+middle = videoCapture.resolution[0] / 2
 previous_radius = None
+
+GPIO.setmode(GPIO.BOARD)
 
 MOTOR1B = 29
 MOTOR1E = 31
@@ -159,7 +159,7 @@ def search():
     right_turn()
     start = time.time()
     found = False
-    for image in videoCapture.capture_continuous(rawCapture, format="bgr", use_video_port=True):
+    for image in videoCapture.capture_continuous(rawCapture, format="bgr"):
         frame = image.array
         frame = cv2.flip(frame, 1)
 
@@ -177,7 +177,7 @@ def search():
 
 
 def move_toward(circle_center):
-    if abs(circle_center-middle) < 50:
+    if abs(circle_center-middle) < middle/4:
         print("straight")
         forward()
     elif circle_center < middle:
@@ -194,7 +194,7 @@ if GPIO.input(10) == GPIO.high:
 time.sleep(0.5)  # let button be released
 
 if GPIO.input(10) == GPIO.high:
-    for image in videoCapture.capture_continuous(rawCapture, format="bgr", use_video_port=True):
+    for image in videoCapture.capture_continuous(rawCapture, format="bgr"):
         # while (True):
         #ret, frame = videoCapture.read()
         frame = image.array
@@ -237,12 +237,15 @@ if GPIO.input(10) == GPIO.high:
 
         move_toward(x+radius)
 
+        previous_radius = radius
+
         if radius >= radius_aim and abs(x+radius-middle) < 50:
             print("stopped")
             stop()
+        rawCapture.truncate(0)
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+        # if cv2.waitKey(1) & 0xFF == ord('q'):
+        #     break
 
 # videoCapture().release
-cv2.destroyAllWindows()
+# cv2.destroyAllWindows()
