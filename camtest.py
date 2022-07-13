@@ -7,13 +7,13 @@ import time
 import math
 
 color_aim = (240, 125, 186)
-videoCapture = PiCamera()
-videoCapture.resolution = (320, 240)  # 60fps
-# videoCapture.framerate = 60 #ends up being 5-7 fps at 720p
-#rawCapture = PiRGBArray(videoCapture, size=(1280, 720))
-rawCapture = PiRGBArray(videoCapture)
-middle = videoCapture.resolution[0] / 2
-print(videoCapture.framerate, sep="\n")
+video_capture = PiCamera()
+video_capture.resolution = (320, 240)  # 60fps
+# video_capture.framerate = 60 #ends up being 5-7 fps at 720p
+#raw_capture = PiRGBArray(video_capture, size=(1280, 720))
+raw_capture = PiRGBArray(video_capture)
+middle = video_capture.resolution[0] / 2
+print(video_capture.framerate, sep="\n")
 #print("middle", middle, sep="\n")
 previous_radius = None
 
@@ -116,7 +116,7 @@ def move_toward(circle_center):
 
 calibrate()
 
-for image in videoCapture.capture_continuous(rawCapture, format="bgr"):
+for image in video_capture.capture_continuous(raw_capture, format="bgr"):
     start = time.time()
     frame = image.array
     #frame = cv2.flip(frame, 1)
@@ -141,5 +141,5 @@ for image in videoCapture.capture_continuous(rawCapture, format="bgr"):
 
     if radius >= radius_aim and abs(x + radius - middle) < 50:
         print("stopped")
-    rawCapture.truncate(0)
+    raw_capture.truncate(0)
     print(time.time()-start, "\n")

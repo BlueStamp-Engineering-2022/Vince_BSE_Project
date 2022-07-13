@@ -1,4 +1,3 @@
-from os import readlink
 import cv2
 import numpy as np
 import time
@@ -7,21 +6,24 @@ import RPi.GPIO as GPIO
 from picamera import PiCamera
 from picamera.array import PiRGBArray
 
-color_aim = (240, 125, 186)
-#videoCapture = cv2.VideoCapture(0)
-videoCapture = PiCamera()
-videoCapture.resolution = (320, 240)  # 16-32 fps
-rawCapture = PiRGBArray(videoCapture)
-middle = videoCapture.resolution[0] / 2
+GPIO.setwarnings(False)
+
+#color_aim = (120, 75, 110)
+video_capture = PiCamera()
+video_width = 640
+video_height = 480
+video_capture.resolution = (video_width, video_height)  # 16-32 fps
+raw_capture = PiRGBArray(video_capture, size=(video_width, video_height))
+middle = video_capture.resolution[0] / 2
 previous_radius = None
 
 GPIO.setmode(GPIO.BOARD)
 
-MOTOR1B = 29
-MOTOR1E = 31
-MOTOR2B = 33
-MOTOR2E = 35
-BUTTON_PIN = 32
+MOTOR1B = 31  # IN2
+MOTOR1E = 29  # IN1
+MOTOR2B = 35  # IN4
+MOTOR2E = 33  # IN3
+BUTTON_PIN = 22
 
 GPIO.setup(MOTOR1B, GPIO.OUT)
 GPIO.setup(MOTOR1E, GPIO.OUT)
@@ -46,14 +48,14 @@ def reverse():
     GPIO.output(MOTOR2E, GPIO.HIGH)
 
 
-def right_turn():
+def left_turn():
     GPIO.output(MOTOR1B, GPIO.LOW)
     GPIO.output(MOTOR1E, GPIO.HIGH)
     GPIO.output(MOTOR2B, GPIO.HIGH)
     GPIO.output(MOTOR2E, GPIO.LOW)
 
 
-def left_turn():
+def right_turn():
     GPIO.output(MOTOR1B, GPIO.HIGH)
     GPIO.output(MOTOR1E, GPIO.LOW)
     GPIO.output(MOTOR2B, GPIO.LOW)
@@ -67,38 +69,54 @@ def stop():
     GPIO.output(MOTOR2B, GPIO.LOW)
 
 
+def color_process(x, y, width, height, color_frame):
+    radius = (width+height)/2
+    center = (x+radius, y+radius)
+
+    red = green = blue = length = 0
+
+    for w in range(x, x+width, 10):
+        for h in range(y, y+height, 10):
+            if math.sqrt((w-center[0])**2+(h-center[1])**2) <= radius:
+                red += color_frame[h][w][0]
+                green += color_frame[h][w][1]
+                blue += color_frame[h][w][2]
+                length += 1
+
+    if length > 0:
+        red /= length
+        green /= length
+        blue /= length
+
+    return (red, green, blue)
+
+
 def calibrate():
     global radius_aim
+    global color_aim
     # allow the camera to warmup
-    time.sleep(0.1)
-    #radius_aim = 300
-    # for image in videoCapture.capture_continuous(rawCapture, format="bgr", use_video_port=True):
-    # frame = image.array
-    # frame = cv2.flip(frame, 1)
-    # x, y, w, h = find_blob(segment_colour(frame))
-    calibration_frame = np.empty((720, 1280, 3), dtype=np.uint8)
-    videoCapture.capture(calibration_frame, 'bgr')
+    time.sleep(0.01)
+    calibration_frame = np.empty(
+        (video_height, video_width, 3), dtype=np.uint8)
+    video_capture.capture(calibration_frame, 'rgb')
     x, y, w, h = find_blob(segment_colour(calibration_frame))
+    # r, g, b = color_check(x, y, w, h, calibration_frame)
+    # color_aim=(r, g, b)
+    color_aim = color_process(x, y, w, h, calibration_frame)
+    print(color_aim)
     radius_aim = (w+h)/4
 
 
 def segment_colour(frame):  # returns only the pink colors in the frame
-    hsv_roi = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    hsv_roi = cv2.cvtColor(frame, cv2.COLOR_RGB2HSV)
     mask_1 = cv2.inRange(hsv_roi, np.array(
         [160, 100, 10]), np.array([190, 255, 255]))
-    # mask_1 = cv2.inRange(hsv_roi, np.array(
-    #     [145, 100, 20]), np.array([160, 255, 255]))
 
-    ycr_roi = cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb)
+    ycr_roi = cv2.cvtColor(frame, cv2.COLOR_RGB2YCrCb)
     mask_2 = cv2.inRange(ycr_roi, np.array((141., 177., 154.)),
                          np.array((218., 148., 136.)))
 
-    # gray_roi = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    # gray_roi = cv2.GaussianBlur(gray_roi, (17, 17), 0)
-    # mask_2 = cv2.inRange(gray_roi, 101.873, 206.124)
-
     mask = mask_1 | mask_2
-    # mask = mask_1
     kern_dilate = np.ones((8, 8), np.uint8)
     kern_erode = np.ones((3, 3), np.uint8)
     mask = cv2.erode(mask, kern_erode)  # Eroding
@@ -110,7 +128,7 @@ def segment_colour(frame):  # returns only the pink colors in the frame
 def find_blob(blob):  # returns the pink colored circle
     largest_contour = 0
     cont_index = 0
-    contours, hierarchy = cv2.findContours(
+    _, contours, _ = cv2.findContours(
         blob, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
     for i, contour in enumerate(contours):
         area = cv2.contourArea(contour)
@@ -132,8 +150,8 @@ def color_check(x, y, width, height, color_frame):
 
     red = green = blue = length = 0
 
-    for w in range(x, x+width, int((x+width)/50+1)+1):
-        for h in range(y, y+height, int((y+height)/50)+1):
+    for w in range(x, x+width, 10):
+        for h in range(y, y+height, 10):
             if math.sqrt((w-center[0])**2+(h-center[1])**2) <= radius:
                 red += color_frame[h][w][0]
                 green += color_frame[h][w][1]
@@ -145,9 +163,15 @@ def color_check(x, y, width, height, color_frame):
         green /= length
         blue /= length
 
-    diff = abs(color_aim[0]-red) + \
-        abs(color_aim[1]-green)+abs(color_aim[2]-blue)
-    return diff < 200
+    #print(red, green, blue, sep="\n")
+
+    # diff = abs(color_aim[0]-red) + \
+    #     abs(color_aim[1]-green)+abs(color_aim[2]-blue)
+    # return diff < 150
+    allowed_color_diff = 60
+    # print("abvals", abs(
+    #     color_aim[0]-red), abs(color_aim[1]-green), abs(color_aim[2]-blue), sep="\n")
+    return abs(color_aim[0]-red) < allowed_color_diff and abs(color_aim[1]-green) < allowed_color_diff and abs(color_aim[2]-blue) < allowed_color_diff
 
 # look for the ball if it is likely the ball has left fov
 # if ball completely leaves fov, will likely constantly trigger
@@ -159,18 +183,24 @@ def search():
     right_turn()
     start = time.time()
     found = False
-    for image in videoCapture.capture_continuous(rawCapture, format="bgr"):
+    search_raw_capture = PiRGBArray(video_capture, size=(320, 240))
+    for image in video_capture.capture_continuous(search_raw_capture, format="rgb"):
         frame = image.array
         frame = cv2.flip(frame, 1)
 
         mask_pink = segment_colour(frame)
         x, y, w, h = find_blob(mask_pink)
 
+        search_raw_capture.truncate(0)
+
         if color_check(x, y, w, h, frame):
             found = True
             break
+
         # change time to make it a 360° rotation
-        if time.time()-start >= 2:
+        if time.time()-start >= 5:
+            break
+        if GPIO.input(BUTTON_PIN) == 1:
             break
 
     return found
@@ -188,64 +218,64 @@ def move_toward(circle_center):
         right_turn()
 
 
-if GPIO.input(10) == GPIO.high:
-    calibrate()
+stop()
+
+while GPIO.input(BUTTON_PIN) == 0:
+    pass
+
+print("button read")
+# time.sleep(1)
+
+calibrate()
+print(radius_aim)
 
 time.sleep(0.5)  # let button be released
 
-if GPIO.input(10) == GPIO.high:
-    for image in videoCapture.capture_continuous(rawCapture, format="bgr"):
-        # while (True):
-        #ret, frame = videoCapture.read()
-        frame = image.array
-        frame = cv2.flip(frame, 1)
+while GPIO.input(BUTTON_PIN) == 0:
+    pass
+print("button read second")
+time.sleep(0.5)
 
-        mask_pink = segment_colour(frame)
+for image in video_capture.capture_continuous(raw_capture, format="rgb"):
+    start = time.time()
+    frame = image.array
+    frame = cv2.flip(frame, 1)
 
-        # circles = cv2.HoughCircles(mask_pink, cv2.HOUGH_GRADIENT, 1.2,
-        #                            100, param1=500, param2=200, minRadius=50, maxRadius=500)
+    mask_pink = segment_colour(frame)
+    x, y, w, h = find_blob(mask_pink)
+    radius = w/2
 
-        # print(circles)
-        #find_blob(frame, mask_pink)
-        x, y, w, h = find_blob(mask_pink)
-        radius = w/2
-        if previous_radius is None:
-            previous_radius = radius
-        elif previous_radius < radius/2 or previous_radius > radius*2:
-            if search() is False:
-                print("Couldn't find =(")
-                # maybe try to make an algorithm to chase
-                break
-        elif color_check(x, y, w, h, frame):
-            if search() is False:
-                print("Couldn't find =(")
-                # maybe try to make an algorithm to chase
-                break
-
-        displayx = int(x+w)
-        displayy = int(y)
-        cv2.putText(mask_pink, "Radius: "+str(radius), (displayx, displayy),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (117, 192, 255), 3)
-        cv2.circle(mask_pink, (int(x+radius), int(y+radius)),
-                   int(radius), (117, 192, 255), 3)
-
-        cv2.imshow('mask', mask_pink)
-        # cv2.putText(frame, "Radius: "+str(radius), (displayx, displayy),
-        #             cv2.FONT_HERSHEY_SIMPLEX, 1, (245, 132, 243), 3)
-
-        # cv2.imshow('frame', frame)
-
-        move_toward(x+radius)
-
+    if previous_radius is None:
         previous_radius = radius
+    elif previous_radius < radius/2 or previous_radius > radius*2:
+        # print("radius_check")
+        if search() is False:
+            print("Couldn't find =(")
+            # maybe try to make an algorithm to chase
+            break
+    elif color_check(x, y, w, h, frame) is False:
+        # print("color_check")
+        if search() is False:
+            print("Couldn't find =(")
+            # maybe try to make an algorithm to chase
+            break
 
-        if radius >= radius_aim and abs(x+radius-middle) < 50:
-            print("stopped")
-            stop()
-        rawCapture.truncate(0)
+    move_toward(x+radius)
 
-        # if cv2.waitKey(1) & 0xFF == ord('q'):
-        #     break
+    previous_radius = radius
 
-# videoCapture().release
-# cv2.destroyAllWindows()
+    if radius >= radius_aim and abs(x+radius-middle) < 50:
+        print("stopped")
+        stop()
+    raw_capture.truncate(0)
+
+    print(time.time()-start)
+
+    if GPIO.input(BUTTON_PIN) == 1:
+        break
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+stop()
+GPIO.cleanup()
