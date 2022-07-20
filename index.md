@@ -1,4 +1,4 @@
-# Computer Vision Object Tracking Robot
+<!--# Computer Vision Object Tracking Robot-->
 
 My project is a robot that uses the OpenCV Python library to track and follow a ball of uniform color through the Raspberry Pi camera. It performs color filtering and circle detection on each individual frame captured by the Raspberry Pi camera to detect the ball and moves towards the ball until it reaches a calibrated distance, at which point it stops moving until the ball moves out of the calibrated distance again.
 
