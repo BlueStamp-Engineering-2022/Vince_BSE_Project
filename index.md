@@ -1,23 +1,19 @@
-<iframe width="560" height="315" src="https://www.youtube.com/embed/l8nPyzf9I08" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
 # Computer Vision Object Tracking Robot
 
-My project is a robot that uses the OpenCV Python library to track and follow a ball of uniform color through the Raspberry Pi camera.
-
-This will serve as a brief description of your project. Limit this to three sentences because it can become overly long at that point. This copy should draw the user in and make she/him want to read more.
+My project is a robot that uses the OpenCV Python library to track and follow a ball of uniform color through the Raspberry Pi camera. It performs color filtering and circle detection on each individual frame captured by the Raspberry Pi camera to detect the ball and moves towards the ball until it reaches a calibrated distance, at which point it stops moving until the ball moves out of the calibrated distance again.
 
 | **Engineer** |      **School**       |  **Area of Interest**  |     **Grade**      |
 | :----------: | :-------------------: | :--------------------: | :----------------: |
 |    Vince     | Palo Alto High School | Computer Science | Incoming Sophomore |
 
-<!-- ![Headstone Image](bluestamp_headshot.JPG =250x150))-->
-<img src="bluestamp_headshot.JPG" width="60%" ></img>
+![Headstone Image](bluestamp_headshot.JPG)
+<!--  <img src="bluestamp_headshot.JPG" width="60%" > -->
 
 # Second Milestone
 
 My second milestone is my completed robot with a modified version of the software I developed in Milestone #1 and hardware I built in this milestone. At the beginning of this milestone, I found out that we only had one of the two wheels I needed to build a functioning robot with my motors, so we managed to find a spare acrylic kit with two small 3-6 volt motors with two matching wheels that I could use to build my robot instead. This was a setback initially, but ended up working out fairly well since these low-power motors could be properly powered by the Raspberry Pi 5 volt output, making it so that I only needed to have a mobile external power source for my Raspberry Pi and the whole robot would be powered. For the majority of the milestone, I was trying to use a 9 volt battery pack in tandem with a voltage regulator to power my Raspberry Pi while the robot moved freely. The Raspberry Pi can only take 4.75-5.25 volts safely, and we didn’t have any battery packs that provided power in that range, so I needed to use a voltage regulator to safely provide battery power to my Pi, which provided some good soldering experience. Unfortunately, while the battery pack didn’t fry my Raspberry Pi with overvoltage, it generally had the opposite problem of undervoltage. The battery pack would drain its batteries extremely fast, rendering a full 6-pack of batteries mostly useless for my robot after just a few hours of usage. And even when I had a pack filled with fresh AA’s, the poorly made battery pack would constantly cease providing power entirely for a few seconds, cutting off the power to the Raspberry Pi, causing it to reboot and stopping whatever program was running. At one point, one of the wires pre attached to the battery pack fell off and I had to resolder it, which was a very annoying hurdle that nonetheless gave me some more good soldering experience. Fortunately, some portable power banks with USB plugins arrived after a few weeks, and I promptly switched to the vastly more consistent power source. I also had some difficulty finally integrating my movement and image-processing software with my physical robot, but we eventually worked through all of those issues to create a working robot.
 
-[![Third Milestone](https://res.cloudinary.com/marcomontalbano/image/upload/v1612574014/video_to_markdown/images/youtube--y3VAmNlER5Y-c05b58ac6eb4c4700831b2b3070cd403.jpg)](https://www.youtube.com/watch?v=y3VAmNlER5Y&feature=emb_logo "Second Milestone"){:target="\_blank" rel="noopener"}
+video to be filmed
 
 # First Milestone
 
@@ -25,10 +21,8 @@ My first milestone was writing code that could successfully power a basic demo w
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/l8nPyzf9I08" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-[![First Milestone](https://res.cloudinary.com/marcomontalbano/image/upload/v1612574117/video_to_markdown/images/youtube--CaCazFBhYKs-c05b58ac6eb4c4700831b2b3070cd403.jpg)](https://www.youtube.com/watch?v=CaCazFBhYKs "First Milestone"){:target="\_blank" rel="noopener"}
-
 # Starter Project
 
 My starter project was a custom Arduino project. For this project, I chose a pushbutton as my input and an LED as my output. Since this was essentially the first time I had worked with circuits, initially, I just individually followed the official Arduino tutorials for the pushbutton and the LED to get a basic understanding for how to wire circuits on a breadboard and what resistors to use for the individual components. Afterwards, I used the knowledge I had gained from the tutorials to think of an original way to wire on the breadboard so that I could control the LED with the pushbutton. I faced a few struggles with my original pushbutton not working and figuring out how wiring worked, but it was a good experience that allowed me to learn a lot more about wiring and Arduinos.
 
-[![Starter Project](https://res.cloudinary.com/marcomontalbano/image/upload/v1612574117/video_to_markdown/images/youtube--CaCazFBhYKs-c05b58ac6eb4c4700831b2b3070cd403.jpg)](https://www.youtube.com/watch?v=CaCazFBhYKs "Starter Project"){:target="\_blank" rel="noopener"}
+<iframe width="560" height="315" src="https://www.youtube.com/embed/76CmN1As6nM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
