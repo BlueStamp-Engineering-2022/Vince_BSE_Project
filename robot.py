@@ -8,21 +8,25 @@ from picamera.array import PiRGBArray
 
 GPIO.setwarnings(False)
 
-#color_aim = (120, 75, 110)
+#color_aim = (130, 75, 110)
 video_capture = PiCamera()
+#video_capture.rotation=180
 video_width = 640
 video_height = 480
-video_capture.resolution = (video_width, video_height)  # 16-32 fps
+video_capture.resolution = (video_width, video_height)  # 40 fps
+#video_capture.framerate = 16
 raw_capture = PiRGBArray(video_capture, size=(video_width, video_height))
-middle = video_capture.resolution[0] / 2
+middle = 320
 previous_radius = None
+left = True
+
 
 GPIO.setmode(GPIO.BOARD)
 
-MOTOR1B = 31  # IN2
-MOTOR1E = 29  # IN1
-MOTOR2B = 35  # IN4
-MOTOR2E = 33  # IN3
+MOTOR1B = 31  
+MOTOR1E = 33
+MOTOR2B = 35 
+MOTOR2E = 37
 BUTTON_PIN = 22
 
 GPIO.setup(MOTOR1B, GPIO.OUT)
@@ -34,28 +38,28 @@ GPIO.setup(MOTOR2E, GPIO.OUT)
 GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 
-def forward():
+def left_turn():
     GPIO.output(MOTOR1B, GPIO.HIGH)
     GPIO.output(MOTOR1E, GPIO.LOW)
     GPIO.output(MOTOR2B, GPIO.HIGH)
     GPIO.output(MOTOR2E, GPIO.LOW)
 
 
-def reverse():
+def right_turn():
     GPIO.output(MOTOR1B, GPIO.LOW)
     GPIO.output(MOTOR1E, GPIO.HIGH)
     GPIO.output(MOTOR2B, GPIO.LOW)
     GPIO.output(MOTOR2E, GPIO.HIGH)
 
 
-def left_turn():
+def reverse():
     GPIO.output(MOTOR1B, GPIO.LOW)
     GPIO.output(MOTOR1E, GPIO.HIGH)
     GPIO.output(MOTOR2B, GPIO.HIGH)
     GPIO.output(MOTOR2E, GPIO.LOW)
 
 
-def right_turn():
+def forward():
     GPIO.output(MOTOR1B, GPIO.HIGH)
     GPIO.output(MOTOR1E, GPIO.LOW)
     GPIO.output(MOTOR2B, GPIO.LOW)
@@ -67,7 +71,6 @@ def stop():
     GPIO.output(MOTOR1B, GPIO.LOW)
     GPIO.output(MOTOR2E, GPIO.LOW)
     GPIO.output(MOTOR2B, GPIO.LOW)
-
 
 def color_process(x, y, width, height, color_frame):
     radius = (width+height)/2
@@ -121,7 +124,6 @@ def segment_colour(frame):  # returns only the pink colors in the frame
     kern_erode = np.ones((3, 3), np.uint8)
     mask = cv2.erode(mask, kern_erode)  # Eroding
     mask = cv2.dilate(mask, kern_dilate)  # Dilating
-    # cv2.imshow('mask',mask)
     return mask
 
 
@@ -168,7 +170,7 @@ def color_check(x, y, width, height, color_frame):
     # diff = abs(color_aim[0]-red) + \
     #     abs(color_aim[1]-green)+abs(color_aim[2]-blue)
     # return diff < 150
-    allowed_color_diff = 60
+    allowed_color_diff = 50
     # print("abvals", abs(
     #     color_aim[0]-red), abs(color_aim[1]-green), abs(color_aim[2]-blue), sep="\n")
     return abs(color_aim[0]-red) < allowed_color_diff and abs(color_aim[1]-green) < allowed_color_diff and abs(color_aim[2]-blue) < allowed_color_diff
@@ -180,42 +182,110 @@ def color_check(x, y, width, height, color_frame):
 
 def search():
     print("searching")
-    right_turn()
     start = time.time()
     found = False
-    search_raw_capture = PiRGBArray(video_capture, size=(320, 240))
+    search_raw_capture = PiRGBArray(
+        video_capture, size=(video_width, video_height))
+    time.sleep(0.01)
+    x_blob = None
+    y_blob = None
+    w_blob = None
+    h_blob = None
+    
     for image in video_capture.capture_continuous(search_raw_capture, format="rgb"):
+        if left:
+            left_turn()
+        else:
+            right_turn()
+        time.sleep(0.04)
+        stop()
+        
         frame = image.array
         frame = cv2.flip(frame, 1)
-
+        
         mask_pink = segment_colour(frame)
-        x, y, w, h = find_blob(mask_pink)
+        cv2.imshow("mask", mask_pink)
+        x_blob, y_blob, w_blob, h_blob = find_blob(mask_pink)
 
         search_raw_capture.truncate(0)
 
-        if color_check(x, y, w, h, frame):
+        if color_check(x_blob, y_blob, w_blob, h_blob, frame):
             found = True
             break
 
         # change time to make it a 360° rotation
-        if time.time()-start >= 5:
+        if time.time()-start >= 8:
             break
         if GPIO.input(BUTTON_PIN) == 1:
             break
 
-    return found
+    return x_blob, y_blob, w_blob, h_blob, found
 
 
-def move_toward(circle_center):
-    if abs(circle_center-middle) < middle/4:
+def move_toward(circle_center, radius):
+    if abs(circle_center-middle) < middle/3:
         print("straight")
+
+        #doesn't stop until up way closer
+        if radius >= radius_aim-150:
+            print("stopped")
+            stop()
+            return
+    
         forward()
+        time.sleep(0.01)
+        #stop()
+        
     elif circle_center < middle:
         print("left")
-        left_turn()
+        left = True
+        left_raw_capture = PiRGBArray(
+            video_capture, size=(video_width, video_height))
+        for image in video_capture.capture_continuous(left_raw_capture, format="rgb"):
+            left_turn()
+            time.sleep(0.04)
+            stop()
+            frame = image.array
+            frame = cv2.flip(frame, 1)
+            
+            mask_pink = segment_colour(frame)
+    
+            x, y, w, h = find_blob(mask_pink)
+            radius = (w+h)/4
+            
+            if abs(x+radius-middle) < middle/3:
+                stop()
+                break
+            
+            left_raw_capture.truncate(0)
+            if GPIO.input(BUTTON_PIN) == 1:
+                break
+        #stop()
     else:
         print("right")
-        right_turn()
+        left = False
+        right_raw_capture = PiRGBArray(
+            video_capture, size=(video_width, video_height))
+        for image in video_capture.capture_continuous(right_raw_capture, format="rgb"):
+            right_turn()
+            time.sleep(0.04)
+            stop()
+            frame = image.array
+            frame = cv2.flip(frame, 1)
+            
+            mask_pink = segment_colour(frame)
+    
+            x, y, w, h = find_blob(mask_pink)
+            radius = (w+h)/4
+            
+            if abs(x+radius-middle) < middle/3:
+                stop()
+                break
+            
+            right_raw_capture.truncate(0)
+            if GPIO.input(BUTTON_PIN) == 1:
+                break
+        #stop()
 
 
 stop()
@@ -224,7 +294,6 @@ while GPIO.input(BUTTON_PIN) == 0:
     pass
 
 print("button read")
-# time.sleep(1)
 
 calibrate()
 print(radius_aim)
@@ -237,45 +306,60 @@ print("button read second")
 time.sleep(0.5)
 
 for image in video_capture.capture_continuous(raw_capture, format="rgb"):
-    start = time.time()
+    stop()
+    time.sleep(0.01)
+    
     frame = image.array
     frame = cv2.flip(frame, 1)
 
     mask_pink = segment_colour(frame)
+    
+    cv2.imshow("mask", mask_pink)
+    
     x, y, w, h = find_blob(mask_pink)
-    radius = w/2
+    radius = (w+h)/4
+    print(radius, x, y, sep="\n")
 
     if previous_radius is None:
         previous_radius = radius
     elif previous_radius < radius/2 or previous_radius > radius*2:
-        # print("radius_check")
-        if search() is False:
+        print("radius_check")
+        x_blob, y_blob, w_blob, h_blob, found=search()
+        if found:
+            radius=(w_blob + h_blob)/4
+            x=x_blob
+            y=y_blob
+        else:
             print("Couldn't find =(")
             # maybe try to make an algorithm to chase
             break
     elif color_check(x, y, w, h, frame) is False:
-        # print("color_check")
-        if search() is False:
+        print("color_check")
+        x_blob, y_blob, w_blob, h_blob, found=search()
+        if found:
+            radius=(w_blob + h_blob)/4
+            x=x_blob
+            y=y_blob
+        else:
             print("Couldn't find =(")
             # maybe try to make an algorithm to chase
             break
 
-    move_toward(x+radius)
+    move_toward(x+radius, radius)
+    print("center", x+radius, sep=" ")
 
     previous_radius = radius
-
-    if radius >= radius_aim and abs(x+radius-middle) < 50:
-        print("stopped")
-        stop()
+    
     raw_capture.truncate(0)
 
-    print(time.time()-start)
-
     if GPIO.input(BUTTON_PIN) == 1:
+        raw_capture.truncate(0)
         break
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
+        raw_capture.truncate(0)
         break
-
+    
 stop()
 GPIO.cleanup()
+#cv2.destroyAllWindows()

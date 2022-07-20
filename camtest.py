@@ -7,15 +7,16 @@ import time
 import math
 
 color_aim = (240, 125, 186)
-video_capture = PiCamera()
-video_capture.resolution = (320, 240)  # 60fps
-# video_capture.framerate = 60 #ends up being 5-7 fps at 720p
-#raw_capture = PiRGBArray(video_capture, size=(1280, 720))
-raw_capture = PiRGBArray(video_capture)
-middle = video_capture.resolution[0] / 2
-print(video_capture.framerate, sep="\n")
+videoCapture = PiCamera()
+videoCapture.resolution = (320, 240)  # 60fps
+#videoCapture.framerate = 60
+#rawCapture = PiRGBArray(videoCapture, size=(1280, 720))
+rawCapture = PiRGBArray(videoCapture)
+middle = 160
+print(videoCapture.framerate, sep="\n")
 #print("middle", middle, sep="\n")
 previous_radius = None
+#cv2.imshow('video', videoCapture)
 
 
 def calibrate():
@@ -40,7 +41,7 @@ def segment_colour(frame):  # returns only the red colors in the frame
     kern_erode = np.ones((3, 3), np.uint8)
     mask = cv2.erode(mask, kern_erode)  # Eroding
     mask = cv2.dilate(mask, kern_dilate)  # Dilating
-    # cv2.imshow('mask',mask)
+    
     return mask
 
 
@@ -103,9 +104,9 @@ def search():
     print("searching", "\n", "\n")
     # searchindex += 1
 
-
+print("middle", middle/4, sep=" ")
 def move_toward(circle_center):
-    if abs(circle_center - middle) < middle/4:
+    if abs(circle_center - middle) < 90:
         print("straight")
     elif circle_center < middle:
         print("left")
@@ -116,7 +117,7 @@ def move_toward(circle_center):
 
 calibrate()
 
-for image in video_capture.capture_continuous(raw_capture, format="bgr"):
+for image in videoCapture.capture_continuous(rawCapture, format="bgr"):
     start = time.time()
     frame = image.array
     #frame = cv2.flip(frame, 1)
@@ -128,7 +129,7 @@ for image in video_capture.capture_continuous(raw_capture, format="bgr"):
     radius = w / 2
     if previous_radius is None:
         previous_radius = radius
-    elif previous_radius < radius / 3 or previous_radius > radius * 3:
+    elif previous_radius < radius / 2.5 or previous_radius > radius * 2.5:
         search()
         print("radius")
     elif color_check(x, y, w, h, frame):
@@ -136,10 +137,11 @@ for image in video_capture.capture_continuous(raw_capture, format="bgr"):
         print("color")
 
     move_toward(x + radius)
+    print(x, radius, sep=" ")
 
     previous_radius = radius
 
-    if radius >= radius_aim and abs(x + radius - middle) < 50:
+    if radius >= radius_aim and abs(x + radius - middle) < 90:
         print("stopped")
-    raw_capture.truncate(0)
+    rawCapture.truncate(0)
     print(time.time()-start, "\n")
