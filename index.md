@@ -1,4 +1,6 @@
-﻿# Computer Vision Object Tracking Robot
+<iframe width="560" height="315" src="https://www.youtube.com/embed/l8nPyzf9I08" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+# Computer Vision Object Tracking Robot
 
 My project is a robot that uses the OpenCV Python library to track and follow a ball of uniform color through the Raspberry Pi camera.
 
@@ -6,19 +8,20 @@ This will serve as a brief description of your project. Limit this to three sent
 
 | **Engineer** |      **School**       |  **Area of Interest**  |     **Grade**      |
 | :----------: | :-------------------: | :--------------------: | :----------------: |
-|    Vince     | Palo Alto High School | Electrical Engineering | Incoming Sophomore |
+|    Vince     | Palo Alto High School | Computer Science | Incoming Sophomore |
 
-![Headstone Image](bluestamp_headshot.jpg)
+<!-- ![Headstone Image](bluestamp_headshot.JPG =250x150))-->
+<img src="bluestamp_headshot.JPG" width="60%" ></img>
 
 # Second Milestone
 
-My second milestone is my completed robot with software and hardware
+My second milestone is my completed robot with a modified version of the software I developed in Milestone #1 and hardware I built in this milestone. At the beginning of this milestone, I found out that we only had one of the two wheels I needed to build a functioning robot with my motors, so we managed to find a spare acrylic kit with two small 3-6 volt motors with two matching wheels that I could use to build my robot instead. This was a setback initially, but ended up working out fairly well since these low-power motors could be properly powered by the Raspberry Pi 5 volt output, making it so that I only needed to have a mobile external power source for my Raspberry Pi and the whole robot would be powered. For the majority of the milestone, I was trying to use a 9 volt battery pack in tandem with a voltage regulator to power my Raspberry Pi while the robot moved freely. The Raspberry Pi can only take 4.75-5.25 volts safely, and we didn’t have any battery packs that provided power in that range, so I needed to use a voltage regulator to safely provide battery power to my Pi, which provided some good soldering experience. Unfortunately, while the battery pack didn’t fry my Raspberry Pi with overvoltage, it generally had the opposite problem of undervoltage. The battery pack would drain its batteries extremely fast, rendering a full 6-pack of batteries mostly useless for my robot after just a few hours of usage. And even when I had a pack filled with fresh AA’s, the poorly made battery pack would constantly cease providing power entirely for a few seconds, cutting off the power to the Raspberry Pi, causing it to reboot and stopping whatever program was running. At one point, one of the wires pre attached to the battery pack fell off and I had to resolder it, which was a very annoying hurdle that nonetheless gave me some more good soldering experience. Fortunately, some portable power banks with USB plugins arrived after a few weeks, and I promptly switched to the vastly more consistent power source. I also had some difficulty finally integrating my movement and image-processing software with my physical robot, but we eventually worked through all of those issues to create a working robot.
 
 [![Third Milestone](https://res.cloudinary.com/marcomontalbano/image/upload/v1612574014/video_to_markdown/images/youtube--y3VAmNlER5Y-c05b58ac6eb4c4700831b2b3070cd403.jpg)](https://www.youtube.com/watch?v=y3VAmNlER5Y&feature=emb_logo "Second Milestone"){:target="\_blank" rel="noopener"}
 
 # First Milestone
 
-My first milestone was setting up and hooking up the Raspberry Pi and all the necessary components onto my tv. The heatsinks, the sd card, and the controller were all added to ensure that the Raspberry Pi was working. Instead of the Raspberry Pi Os software, I had to first download a different software called Retro Pie. With Retro Pie, I needed to download an Imager for Raspberry Pi. Raspberry Pi Imager automatically downloads a list of the latest versions of Raspbian supported by the Raspberry Pi. Raspbian is the typical Raspberry Pi Os software, the one I needed on the Raspberry Pi was Retro Pi. With the included SD card, I plugged in the SD into my computer and launched the Imager. The imager allowed me to set the Operating System to Retro Pi instead of Raspbian onto the SD card. With the OS imaged onto the SD, I plugged the SD card back into the Raspberry Pi and rebooted the system and Retro Bi booted up.
+My first milestone was writing code that could successfully power a basic demo with a Raspberry Pi, an H-bridge motor driver, and two 12 volt DC motors. The original online guide for this project was both outdated (made in 2016), and the robot shown in its demo video didn't work very well. Plus, I enjoy programming and partially chose this project because I wanted to do some software-hardware integration, so I decided to mostly make my own code from scratch, only partially taking the image filtering and processing algorithms from the original guide. I also decided to start by only using the camera to calibrate and determine distance and wait to see if I had extra time to implement echolocation sensors to reduce complexity initially. In this phase of the project, I ironically mostly faced difficulties with hardware, despite this being a software-heavy phase. I didn't have access to a battery pack at this point, and since my motors were 12 volt DC motors, I couldn't use the built-in Raspberry Pi 5 volt power source. In order to provide enough voltage to power my motors, I used a 12 volt power cable that was difficult to get working. I also faced a lot of struggles with setting up my Raspberry Pi, eventually leading me to switch microSD cards, and various other hardware components either broke or didn’t work altogether from the start. Despite those issues, I was able to complete this part of the project and learn more about circuits and Python OpenCV.
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/l8nPyzf9I08" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
